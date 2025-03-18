@@ -1,0 +1,945 @@
+---
+title: "Final Report"
+author: "Danyang Dai"
+date: "March 17th"
+output:
+  html_document:
+    df_print: paged
+    number_sections: yes
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
+
+# Introduction
+
+Class size and class composition are strongly related to student achievement, as the set of educational research topics focused on these two remain controversial. A large, rich data set coming from a study (Tennessee STAR Project) large-scale randomized controlled trial on the STAR provides insight into this link. The dataset encompasses class type (small classes, regular classes, and regular classes with aides) and student-level information on over 11,000 students from 79 schools with 300 teachers test score (math and reading) outcomes as well as school features.
+
+Aim for addressing important problems using the STAR dataset is:
+
+*Direct Impact of Class Types*
+
+- Does class type significantly affect students' math performance?
+
+*Factors Influencing Class Type and Performance*
+
+- How do school conditions, individual characteristics, and teacher attributes influence math performance?
+
+- Is the distribution of class types equitable, or influenced by these factors?
+
+- Are there bidirectional causal relationships between these factors and class type?
+
+*Long-Term Impact of Class Types*
+
+- Does class type have a significant impact on students' long-term academic development, such as graduation rates or college entrance scores?
+
+*Policy Implications*
+
+- What are the implications of class types for educational policy?
+
+- Does the allocation of class types reflect fairness in the distribution of educational resources?
+
+Through these inquiries, this research seeks to contribute evidence-based guidance on how educational practices and policies may be improved-quality for all would be the ultimate aim of promoting quality with equitable resource distribution.
+
+# Background
+
+Project STAR (Student Teacher Achievement Ratio) was a groundbreaking educational experiment conducted in Tennessee during the 1980s. Its primary goal was to explore how class size influences students’ academic performance. The significance of this study can be better understood through the following perspectives:
+
+1. **Addressing Policy Challenges**:
+    
+    At the time, educators and policymakers in the U.S. were grappling with how to allocate resources effectively to improve student outcomes. Class size had long been considered an important factor, but there was little solid evidence to guide decisions on whether reducing class sizes could truly make a difference.
+    
+2. **Filling Research Gaps**:
+    
+    While earlier studies had touched on the impact of class size, many were hampered by biases or weak experimental designs, leaving questions about cause and effect unanswered. Project STAR set out to solve this by providing clear and reliable data on how class size affects student achievement.
+    
+
+With its large scale and innovative approach, Project STAR became a landmark study, offering valuable insights to shape education policy and improve teaching practices.
+
+# Experimental Design
+
+Project STAR was based on an experimental design for high-precision results and a high-quality outcome. Key elements include:
+
+1. All In: All K-3 schools in Tennessee are included which adds diversity and representativenes
+
+2. Types of Classrooms: Schools generated three classroom sets (small, 13–17 students; regular, 22–26 students; and full teacher ‑assistant)
+
+3. Random Assignment: Students and teachers are randomized to classrooms types (removing bias in this selection process)
+
+4. Big, and Diverse: Study: 79 schools; +6000 students from an urban/suburban/rural/urban context
+
+5. Standardized Testing: Academic performance was assessed with regularly standards-monitored (so the data remained flawless) standardized tests.
+
+6. Independent review: independent external consultant Jeremy Finn
+
+Strengths:
+
+- Randomization for causal inference
+
+- Moderate sample size increased generalizability.
+
+- Big data allowed for both long- and short-term analysis;
+
+Limitations:
+
+- Decreased sample size over time | mobility of students
+
+- Geocadic narrow generalizability beyond Tennessee
+
+- Class size definitions are not transferable.
+
+- Assistant variation could also intervene.
+
+# Comment on initial analysis report
+
+Our primary analysis in the beginning looked at the first year of grade math achievement for kindergarteners (using the AER data-set) and whether it is influenced by the type of class by using regressions. Although this study had a randomized design, data cleaning and analysis must be improved for the strength and generalizability of findings in that the robustness of the present findings requires further attention.
+
+**Data-Level Issues**
+
+1. Extreme missing data: Over 40% missing in Key variables i.e., (‘schoolid1’, ‘experience1’) KNN imputation may induce model bias. Conduct sensitivity analysis concerning the imputation method and test for alternative option (e.g. multiple imputation)
+
+2. Resolving data points: Removing little classes (<10 students) and normalizing large classes (>30 students) may yield biased result. Include clear boundaries for anomaly treatment and assess its impact.
+
+3. Construction of class id — the code for classid may be inaccurate because certain classifications are classified and not even clear. Ensure the `classid` is unique and think about with other variables to improve reliability.
+
+**Methodological Concerns**
+
+1. High-Level Aggregation: Aggregating student-level data to class level sometimes results in information loss and we leave aside the layered structure. Use hierarchical models for nested data (e.g., HLM)
+
+2. Model Assumptions: residual diagnostics indicated non-normality and a small amount of heteroscedasticity that violate assumptions of ANOVA. Use nonparametric methods or transform data to satisfy requirements.
+
+3. Imbalance in sample: Unequal number of class types in the samples questioning study reliability. run weighted analysis and describe the consequences of imbalance in report
+
+**Conclusion-Level Concerns**
+
+1. Generalizability Analysis; Though the statistical significance of analysis had been analyzed, but effect size represents and practical implications were ignored. Report effect sizes (eg, Cohen's d) and interpret real-world impacts.
+
+2. Generalisation: Results found only in first-grade students without specifying applicability and usage for other grades or contexts. Run the findings on multiple grades or areas to increase generalizability.
+
+3. No significant findings: Not enough explanation of non-significant results (for example in the case of Regular+Aide vs. Regular. Dig into what might be behind them (e.g. small sample) and outline where future studies should focus.
+
+# Data explorative analysis 
+
+```{r}
+# Load necessary libraries
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+# Read a .sav file
+data <- read_sav("STAR_Students.sav")
+```
+
+## Data1
+
+The variables for Data1 were selected to analyze the impact of classroom type, school characteristics, and teacher attributes on first-grade math performance.
+
+- First-grade math test scores (g1tmathss): Represents the standardized outcome measure of students' math performance in grade 1.
+
+- Class type (g1classtype): Categorized as small class, regular class, or regular class with a teacher's aide.
+
+- School urbanicity (g1surban): Indicates whether the school is located in an urban, suburban, or rural area.
+
+- STAR school flag (FLAGSG1): Identifies if the school was part of the STAR experiment in grade 1.
+
+- Career ladder level (g1tcareer): Reflects the teacher's professional level within the career ladder system.
+
+- Highest degree (g1thighdegree): Indicates the highest academic qualification attained by the teacher.
+
+- Teaching experience (g1tyears): The number of years the teacher has been teaching.
+
+- Free lunch eligibility (g1freelunch): A proxy for socioeconomic status, indicating whether the student qualifies for free lunch.
+
+- Attendance (g1present): The number of days the student was present in school, reflecting engagement and access to instruction.
+
+- Special instruction needs (g1specin): Indicates whether the student required special instructional support.
+
+These variables enable a comprehensive analysis of factors affecting first-grade math performance, including classroom type, school context, teacher qualifications, and student characteristics, helping isolate the impact of classroom type from other influences.
+
+```{r}
+# Select Variables for First Four Interests
+data1 <- data %>%
+  select(
+    # school
+    FLAGSG1,           # In STAR in grade 1
+    g1surban,          # School urbanicity grade 1
+    # class
+    g1tchid,           # Teacher ID grade 1
+    g1tcareer,         # Teacher career ladder level grade 1
+    g1thighdegree,     # Teacher highest degree grade 1
+    g1tyears,          # Teacher career years
+    g1classtype,       # Class type grade 1
+    # student
+    g1tmathss,         # Total math scale score SAT grade 1
+    g1freelunch,       # Whether have free lunch
+    g1present,         # Days student present
+    g1specin           # Whether need special instruction
+  )
+
+head(data1)
+```
+
+
+### Data preprocessing
+
+We focus only on first-grade students in the STAR project, so we filter the dataset to include rows where FLAGSG1 = 1 and remove the FLAGSG1 column. A missing value summary is then generated to identify data quality issues for further cleaning.
+
+```{r}
+# Remove rows where FLAGSG1 = 0
+data1 <- data1 %>%
+  filter(FLAGSG1 == 1)
+data1$FLAGSG1 <- NULL
+
+# Check the number of missing values in each column
+missing_values <- colSums(is.na(data1))
+
+# Create a missing value report
+missing_summary <- data.frame(
+  Missing_Count = missing_values
+)
+
+# Examine the specific cases of missing values
+missing_summary
+```
+
+Through analysis, we further processed the missing values: samples with missing values for `g1tmathss` were deleted because it is a key variable and has few missing values.
+
+```{r}
+# Delete samples with missing values for g1tmathss
+data1 <- data1[!is.na(data1$g1tmathss), ]
+
+# Check the number of missing values in each column
+missing_values <- colSums(is.na(data1))
+
+# Create a missing value report
+missing_summary <- data.frame(
+  Missing_Count = missing_values
+)
+
+# Examine the specific cases of missing values
+missing_summary
+```
+
+Variables That Do Not Require Processing: 
+
+- g1freelunch, g1present, g1specin: These are used for calculating proportions, means, and counts. Missing values can be ignored during these calculations and do not require imputation.
+
+Variables That Require Processing: 
+
+- g1tcareer, g1thighdegree (categorical variables): Impute missing values using the mode within each g1classtype group.
+
+- g1tyears (continuous variable): Impute missing values using the mean within each g1classtype group.
+
+```{r}
+get_mode <- function(x) {
+  x <- na.omit(x) 
+  uniq_x <- unique(x)
+  uniq_x[which.max(tabulate(match(x, uniq_x)))] 
+}
+
+data1 <- data1 %>%
+  group_by(g1classtype) %>%
+  mutate(
+    g1tcareer = ifelse(is.na(g1tcareer), get_mode(g1tcareer), g1tcareer), # mode
+    g1thighdegree = ifelse(is.na(g1thighdegree), get_mode(g1thighdegree), g1thighdegree), # mode
+    g1tyears = ifelse(is.na(g1tyears), mean(g1tyears, na.rm = TRUE), g1tyears) # mean
+  ) %>%
+  ungroup()
+
+# Check the number of missing values in each column
+missing_values <- colSums(is.na(data1))
+
+# Create a missing value report
+missing_summary <- data.frame(
+  Missing_Count = missing_values
+)
+
+# Examine the specific cases of missing values
+missing_summary
+```
+
+
+### Descriptive Statistics
+
+```{r}
+summary(data1)
+```
+
+```{r}
+# Math Score
+# Histogram
+hist(data1$g1tmathss, main = "Histogram of g1tmathss", xlab = "Math Score", col = "skyblue", border = "white")
+
+# Density Plot
+plot(density(data1$g1tmathss, na.rm = TRUE), main = "Density Plot of g1tmathss", xlab = "Math Score")
+
+# Math Scores by Having free lunch
+ggplot(data1, aes(x = factor(g1freelunch, labels = c("Free lunch", "No Free lunch")), y = g1tmathss)) +
+  geom_boxplot(fill = "red") +
+  labs(title = "Math Scores by Having free lunch", x = "lunch type", y = "Math Scores") +
+  theme_minimal()
+
+# Math Scores vs Attendance
+ggplot(data1, aes(x = g1present, y = g1tmathss)) +
+  geom_point(color = "green", alpha = 0.5) +
+  labs(title = "Math Scores vs Attendance", x = "Days Present", y = "Math Scores")
+
+# Math Scores by special treatment
+ggplot(data1, aes(x = factor(g1specin, labels = c("Special Instruction", "No Special Instruction")), y = g1tmathss)) +
+  geom_boxplot(fill = "pink") +
+  labs(title = "Math Scores by Special Instruction", x = "Special Instruction", y = "Math Scores") +
+  theme_minimal()
+
+```
+
+We find that math scores show a normal-like distribution, peaking at 500–550. Most students performed around average, with few outliers below 450 or above 600. Scores are consistent, but outliers may need attention. Through scatter plot, we cannot see obvious pattern. But in box plot, we see slight trends that students with good economic conditions who do not require special care have higher average math scores.
+
+*Aggregate by classID:*
+
+```{r}
+teacher_performance <- data1 %>%
+  group_by(g1tchid) %>%                  # Group by teacher
+  reframe(
+    mean_math = mean(g1tmathss, na.rm = TRUE),       # Count Mean
+    g1surban = first(g1surban),
+    
+    g1classtype = first(g1classtype),
+    g1tcareer = first(g1tcareer),
+    g1thighdegree = first(g1thighdegree),
+    g1tyears = first(g1tyears),
+    
+    g1freelunch = mean(g1freelunch, na.rm = TRUE)-1,  # Proportion of students requiring financial assistance
+    g1present = mean(g1present, na.rm = TRUE),
+    g1specin = mean(g1specin, na.rm = TRUE)-1.        # Proportion of students requiring special education
+  ) %>%
+  arrange(desc(mean_math))  # Arrange by Mean
+
+# Check the output
+summary(teacher_performance)
+```
+
+```{r}
+teacher_performance <- teacher_performance %>%
+  filter(
+    !is.na(g1freelunch) & 
+    !is.na(g1present) 
+  )
+
+summary(teacher_performance)
+```
+
+
+```{r}
+# Math Score
+# Histogram
+hist(teacher_performance$mean_math, main = "Histogram of mean_math", xlab = "Math Score", col = "skyblue", border = "white")
+
+# Class Type
+class_type_counts <- table(teacher_performance$g1classtype)
+pie(class_type_counts, 
+    main = "Pie Chart of g1classtype",  
+    col = rainbow(length(class_type_counts)),  
+    labels = paste(names(class_type_counts), "(", class_type_counts, ")", sep = "")) 
+# Teacher
+career_counts <- table(teacher_performance$g1tcareer)
+pie(career_counts, 
+    main = "Pie Chart of g1tcareer",  
+    col = rainbow(length(career_counts)),  
+    labels = paste(names(career_counts), "(", career_counts, ")", sep = ""))  
+highdegree_counts <- table(teacher_performance$g1thighdegree)
+pie(highdegree_counts, 
+    main = "Pie Chart of g1thighdegree",  
+    col = rainbow(length(highdegree_counts)),  
+    labels = paste(names(highdegree_counts), "(", highdegree_counts, ")", sep = ""))  
+
+```
+Mean Math Score: It follows a normal distribution.
+
+Class Type: Not differ great.
+
+Career: Category 4 (225) is the largest by far.
+
+Highest Degree: Majority are in category 2 (218).
+
+```{r}
+# Correlation Matrix
+cor_matrix <- teacher_performance %>%
+  select(mean_math, g1classtype, g1surban) %>%
+  cor(use = "complete.obs")
+print(cor_matrix)
+```
+
+Math & Urban Area: 0.377, much higher than Math & Class Type.
+
+```{r}
+library(tidyr)
+teacher_performance_long <- teacher_performance %>%
+  pivot_longer(cols = c(g1classtype, g1surban, g1tcareer, g1thighdegree),
+               names_to = "Group_Variable", values_to = "Group_Value")
+
+# Plot
+ggplot(teacher_performance_long, aes(x = as.factor(Group_Value), y = mean_math, fill = Group_Variable)) +
+  geom_boxplot() +
+  facet_wrap(~ Group_Variable, scales = "free_x") +
+  labs(title = "Boxplots of mean_math by Different Group Variables",
+       x = "Group Value", y = "mean_math") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+The boxplots show that `g1surban` has a slight positive trend in math scores, while `g1classtype`, `g1tcareer`, and `g1thighdegree` display no clear patterns, with similar medians and spreads across groups.
+
+```{r}
+ggplot(teacher_performance, aes(x = as.factor(g1surban), fill = as.factor(g1classtype))) +
+  geom_bar(position = "stack") +
+  labs(title = "Stacked Barplot of g1surban and g1classtype",
+       x = "Urban Level (g1surban)",
+       y = "Count",
+       fill = "Class Type (g1classtype)") +
+  theme_minimal()
+```
+
+The plot shows `g1surban` level 3 dominates with all class types well-represented, while level 4 has the lowest counts across all class types. We found that the distribution of class types is unbalanced.
+
+## Data2
+
+The second set of variables focuses on evaluating the long-term academic impacts of class type, particularly small classes, on high school outcomes.
+
+- `gntmathss`: Represents the standardized outcome measure of students' math performance, where $n = 1, 2, \dots, 8$.
+
+- `gnclasstype`: Categorized as small class, regular class, or regular class with a teacher's aide, where $n = 1, 2, \dots, 8$.
+
+- `hsgrdcol`: High school graduation status (binary: 1 = graduated, 0 = not graduated).
+
+- hsgpaoverall: Overall high school GPA as an indicator of academic performance.
+
+- yearssmall: Number of years spent in small classes, the key variable of interest.
+
+- yearsstar: Number of years participating in the STAR project, used as a control for overall program exposure.
+
+
+
+These variables are selected to assess the causal impact of small class exposure on long-term academic success, using metrics such as graduation rates, standardized test scores, and GPA.
+
+```{r}
+# Select Variables for the fifth Interest
+data2 <- data %>%
+  select(
+    # Y
+    hsgrdcol,          # High school graduation status (binary: 1 = graduated, 0 = not graduated)\
+    hsgpaoverall,      # High school GPA
+    # Time Series
+    g1tmathss,
+    g2tmathss,
+    g3tmathss,
+    g4tmathss,
+    g5tmathss,
+    g6tmathss,
+    g7tmathss,
+    g8tmathss,
+    # X
+    yearssmall,        # Number of years in small classes
+    yearsstar          # Number of years in the STAR project
+  )
+
+head(data2)
+```
+
+
+
+### Data preprocessing
+
+```{r}
+summary(data2)
+```
+
+Since we need time series data, we derectly filter missing value in time series. Then we visualized the missing pattern.
+
+```{r}
+data2 <- data2 %>% filter(!is.na(g1tmathss)&!is.na(g2tmathss)&!is.na(g3tmathss)&!is.na(g4tmathss)&!is.na(g5tmathss)&!is.na(g6tmathss)&!is.na(g7tmathss)&!is.na(g8tmathss))
+
+library(VIM)
+aggr(data2, col=c('navyblue','yellow'), numbers=TRUE, sortVars=TRUE, labels=names(data2), cex.axis=0.7, gap=3, ylab=c("Missing Data","Pattern"))
+```
+
+Missing Data Proportion:
+
+- `hsgpaoverall` has the highest missing proportion (30%).
+
+- `hsgrdcol` follows with 20% missing.
+
+- `yearssmall` and `yearsstar` have minimal or no missing values.
+
+Missing Pattern:
+
+- 22.45% of cases have both `hsgpaoverall` and `hsgrdcol` missing.
+
+- 7.75% of cases have only `hsgpaoverall` missing.
+
+- 0.35% of cases have only `hsgrdcol` missing.
+
+- 69.45% of cases have no missing values.
+
+Therefore, we decide to remove rows with missing values if they are not critical, though this may reduce sample size significantly.
+
+```{r}
+data2 <- data2 %>% filter(!is.na(hsgpaoverall) & !is.na(hsgrdcol))
+```
+
+
+### Descriptive Statistic
+
+```{r}
+summary(data2)
+```
+*Graduation Status (hsgrdcol)*
+
+```{r}
+ggplot(data2, aes(x = factor(hsgrdcol))) +
+  geom_bar(fill = "blue") +
+  labs(title = "Graduation Status Distribution", x = "Graduation Status", y = "Count") +
+  theme_minimal()
+```
+
+Graduation Status Distribution: Most students graduated, with a significantly higher count for graduation status "1" compared to "0".
+
+*High School GPA (hsgpaoverall)*
+
+```{r}
+# Histogram
+ggplot(data2, aes(x = hsgpaoverall)) +
+  geom_histogram(binwidth = 2, fill = "green", color = "black") +
+  labs(title = "GPA Distribution", x = "GPA", y = "Count") +
+  theme_minimal()
+```
+
+GPA Distribution: GPA is roughly normally distributed, with most students scoring around 80.
+
+*Years in Small Classes (yearssmall)*
+
+```{r}
+ggplot(data2, aes(x = factor(yearssmall))) +
+  geom_bar(fill = "orange") +
+  labs(title = "Years in Small Classes", x = "Years", y = "Count") +
+  theme_minimal()
+```
+
+Years in Small Classes: The majority of students did not participate in small classes (0 years), with fewer students attending for 1-4 years.
+
+*Years in STAR Project (yearsstar)*
+
+```{r}
+ggplot(data2, aes(x = factor(yearsstar))) +
+  geom_bar(fill = "purple") +
+  labs(title = "Years in STAR Project", x = "Years", y = "Count") +
+  theme_minimal()
+
+```
+
+Years in STAR Project: Most students participated in the STAR project for 4 years, with fewer participants in shorter durations (1-3 years).
+
+# Methods
+## Regression Model to Math scores
+
+In the data aggregated by class, the mean mathematics score (mean_math) is the dependent variable, while other class characteristics (such as class type, teacher performance, etc.) are independent variables. The goal of this analysis is to assess the impact of class type and teacher characteristics on the average mathematics score of the class. 
+
+Core hypothesis: Small class teaching and excellent teacher resources can significantly improve the average mathematics score of the class. 
+
+The necessity of control variables: The average mathematics score of the class may be influenced by school conditions (such as geographical location), the economic background of class students (such as the proportion of free lunch recipients), and other factors; therefore, these variables need to be included in the model.
+
+**Model Overview**
+
+The regression model was specified as follows:
+
+$$
+\text{mean\_math} = \beta_0 + \beta_1 \cdot \text{g1classtype} + \beta_2 \cdot \text{g1tcareer} + \beta_3 \cdot \text{g1thighdegree} + \beta_4 \cdot \text{g1tyears} + \beta_5 \cdot \text{g1freelunch} + \beta_6 \cdot \text{g1surban} + \epsilon
+$$
+
+- Dependent Variable: `mean_math` (average math score for each class).  
+
+- Independent Variables:
+
+  - `g1classtype`: Class type (small class, large class, special class).
+
+  - `g1tcareer`: Teacher career satisfaction.
+
+  - `g1thighdegree`: Teacher's highest degree.
+
+  - `g1tyears`: Teacher years of experience.
+
+  - `g1freelunch`: Proportion of students receiving free lunch (proxy for economic background).
+
+  - `g1surban`: School location (urban or suburban).
+
+
+```{r}
+# Regression Model
+model_class <- lm(
+  mean_math ~ g1classtype + g1tcareer + g1thighdegree + g1tyears + 
+               g1freelunch + g1surban,
+  data = teacher_performance
+)
+
+# Check output
+summary(model_class)
+```
+
+1. **Model Fit**:
+
+   - **R² = 0.285**: The model explains 28.5% of the variance in the average math scores across classes.
+   
+   - **Adjusted R² = 0.272**: After accounting for the number of predictors, the model's explanatory power slightly decreases but remains acceptable.
+   
+   - **F-statistic = 21.92, p < 2.2e-16**: The model is statistically significant, indicating that at least one predictor has a significant effect on the dependent variable.
+
+2. **Residual Analysis**:
+
+   - Residuals range from -46.825 to 63.412, indicating some deviation between observed and predicted values.
+
+   - Residual standard error = 21.8, suggesting the model's predictions have an average error of ±21.8 points in math scores.
+
+3. **Regression Coefficients**
+
+   - Class type has a significant effect on average math scores (p = 0.00298). It shows the lower performance in small and special classes warrants further investigation.
+
+   - None of the teacher-related variables (`g1tcareer`, `g1thighdegree`, `g1tyears`) show a statistically significant effect on math scores. The lack of significant effects for teacher-related variables suggests that other factors, such as teaching practices or classroom management, may play a more critical role in influencing math scores.
+
+   - The proportion of students receiving free lunch has a highly significant and positive effect on math scores (p = 4.09e-12). It implies that there is strong positive association between free lunch proportions and math scores.
+
+   - Urban schools perform significantly better than suburban schools (p = 0.00137). The urban advantage in math scores suggests that suburban schools may require additional support to bridge the performance gap.
+
+**Diagnostic**
+
+```{r}
+par(mfrow = c(2, 2))
+plot(model_class)
+
+library(car)
+vif(model_class)
+```
+
+1. Linearity: The relationship between predictors and `mean_math` is linear. Residual vs. fitted plots show no systematic patterns, supporting this assumption.
+
+2. Independence of Errors: Errors are assumed independent since the data is class-level.
+
+3. Homoscedasticity: Residuals have constant variance, as seen in the residual vs. fitted plot. No clear heteroscedasticity is observed.
+
+4. Normality of Residuals: Q-Q plots tests indicate residuals are approximately normal, with minor deviations at the tails.
+
+5. Multicollinearity: Variance Inflation Factors (VIFs) are all below 10, confirming no multicollinearity issues.
+
+**Conclusion**
+
+1. **Does class type affect first-grade math performance?**  
+   Yes, small and special classes score 4.42 points lower than large classes ($p = 0.00298$), indicating a significant impact.
+
+2. **Does this impact vary by school, student, or teacher characteristics?**  
+   The impact may vary, as school location ($p = 0.00137$) and student economic background ($p = 4.09e-12$) are significant factors, potentially mediating the effect of class type.
+
+3. **How to quantify the direct impact while controlling for confounders?**  
+   The regression model isolates the effect of class type by controlling for teacher attributes, school location, and student background. Small or special classes score 4.42 points lower, independent of these factors. Further methods like hierarchical modeling could enhance accuracy.
+
+
+## Multinomial logistic regression model to class type
+
+To analyze how school conditions, student characteristics, and teacher attributes influence class type assignment, a multinomial logistic regression model can be used. This model predicts the probability of a student being assigned to a specific class type (e.g., small, large, special).
+
+**Model Formula**:  
+
+$$
+P(\text{Class Type} = k) = \frac{\exp(\beta_0 + \beta_1X_1 + \beta_2X_2 + \ldots)}{1 + \sum_{j=1}^{K-1}\exp(\beta_jX_j)}
+$$
+
+Where $X_1, X_2, \ldots$ are predictors, including:
+
+- **School conditions**: Geographic location (urban/rural), resource levels, etc.
+
+- **Student characteristics**: Gender, race, family economic background (e.g., free lunch proportion).
+
+- **Teacher attributes**: Teaching experience, education level, career satisfaction, etc.
+
+```{r}
+# Load required package
+library(nnet)
+
+# Build multinomial logistic regression model
+model_log <- multinom(g1classtype ~ g1tcareer + g1thighdegree + g1tyears + g1freelunch + g1surban,
+               data = teacher_performance)
+
+# View model results
+summary(model_log)
+
+# Extract significance of each variable
+z_values <- summary(model_log)$coefficients / summary(model_log)$standard.errors
+p_values <- (1 - pnorm(abs(z_values), 0, 1)) * 2
+p_values
+```
+
+The multinomial logistic regression compares class types(regular)to the reference class type(small). Here's a summary of the key findings:
+
+1. Class Type 2 vs. Class Type 1
+
+- None of the predictors (`g1tcareer`, `g1thighdegree`, `g1tyears`, `g1freelunch`, `g1surban`) are statistically significant (p > 0.05).
+
+- For example:
+
+  - `g1freelunch`: Coefficient = -0.4615, p = 0.389. No significant effect on class type assignment.
+
+  - `g1tyears`: Coefficient = -0.0201, p = 0.200. No significant effect.
+
+2. Class Type 3 vs. Class Type 1
+
+- Similarly, no predictors show significant effects (p > 0.05).
+
+- For example:
+
+  - `g1freelunch`: Coefficient = -0.7082, p = 0.209. No significant effect.
+
+  - `g1thighdegree`: Coefficient = 0.3006, p = 0.217. No significant effect.
+
+3. General Notes
+
+- None of the predictors significantly influence class type assignment.
+
+- The model fit (Residual Deviance = 727.357, AIC = 751.357) is acceptable but could be improved.
+
+**Diagnostic**
+
+```{r}
+null_model <- multinom(g1classtype ~ 1, data = teacher_performance)
+anova(null_model, model_log, test = "Chisq")
+```
+
+The chi-square test (p=0.4439) indicates that the variables in the model did not significantly improve the fit.
+
+```{r}
+residuals <- residuals(model_log, type = "pearson")
+hist(residuals)
+plot(predict(model_log), residuals)
+abline(h = 0, col = "red")
+```
+
+Residuals exhibit a bimodal distribution, suggesting the model failed to capture key data features. Predicted probabilities are reasonable, but classification performance remains limited.
+
+```{r}
+cooks_d <- cooks.distance(lm(g1classtype ~ g1tcareer + g1thighdegree + g1tyears + g1freelunch + g1surban, data = teacher_performance))
+plot(cooks_d)
+abline(h = 4/length(cooks_d), col = "red")
+```
+
+Cook's distance indicates no significant outliers affecting the model.
+
+**Conclusion**
+
+- Are students in different class types distributed evenly in terms of school conditions, individual characteristics, and teacher characteristics?
+
+- Based on the model results, school conditions (`g1surban`), individual characteristics (`g1freelunch`), and teacher characteristics (`g1tcareer`, `g1thighdegree`, `g1tyears`) do not significantly affect the probability of students being assigned to different class types (p > 0.05). This suggests that these factors may be relatively evenly distributed across different class types.
+
+## Regression Models to graduation rates and GPA
+
+To understand how class type influences high school graduation rates and GPA, we carefully choose regression models that best fit the nature of the data. Below, we’ll walk through the process step by step, covering why we chose these models, how they work, what the results tell us, and how we ensure the findings are reliable.
+
+For graduation rates, since this outcome is binary (1 = graduated, 0 = not graduated), we use a logistic regression model. Logistic regression is ideal for this type of data because it helps us estimate how likely a student is to graduate based on predictors like years spent in small classes or participation in the STAR project.
+
+For GPA, which is a continuous variable, we use a linear regression model. Linear regression is a straightforward way to measure how predictors like class type are associated with changes in GPA, providing clear and interpretable results.
+
+**Model Formulas**
+
+1. Logistic Regression Model for High School Graduation Rate
+
+$$
+\text{logit}(P(\text{hsgrdcol} = 1)) = \beta_0 + \beta_1 \cdot \text{yearssmall} + \beta_2 \cdot \text{yearsstar}
+$$
+- $\text{logit}(P)$: Log-odds of graduating.
+- $\beta_0$: Intercept, representing the baseline log-odds.
+- $\beta_1$: Effect of years in small classes on graduation rate.
+- $\beta_2$: Effect of years in the STAR project on graduation rate.
+
+2. Linear Regression Model for High School GPA
+
+$$
+\text{hsgpaoverall} = \beta_0 + \beta_1 \cdot \text{yearssmall} + \beta_2 \cdot \text{yearsstar} + \epsilon
+$$
+- $\beta_0$: Intercept, representing the baseline GPA level.
+- $\beta_1$: Effect of years in small classes on GPA.
+- $\beta_2$: Effect of years in the STAR project on GPA.
+- $\epsilon$: Residual term.
+
+
+**Fitting Results**
+
+1. Logistic Regression Model for High School Graduation Rate
+
+```{r}
+model_graduation <- glm(hsgrdcol ~ yearssmall + yearsstar, 
+                        data = data2, 
+                        family = binomial())
+summary(model_graduation)
+```
+
+- **Intercept**: The baseline log-odds of graduating when both `yearssmall` and `yearsstar` are 0 is 0.08186. This is not statistically significant ($p = 0.949$).
+
+- **Yearssmall**: The coefficient for `yearssmall` is 0.01573, meaning that each additional year in small classes increases the log-odds of graduating by 0.01573. However, this effect is not statistically significant ($p = 0.874$).
+
+- **Yearsstar**: The coefficient for `yearsstar` is 0.73759, meaning that each additional year in the STAR project significantly increases the log-odds of graduating by 0.73759 ($p = 0.035$). This suggests a meaningful positive relationship between STAR project participation and graduation rates.
+
+- **Null Deviance**: 334.84 (model without predictors).
+
+- **Residual Deviance**: 330.30 (model with predictors), indicating a small improvement in fit when predictors are included.
+
+- **AIC**: 336.3, which is relatively low, suggesting a decent model fit for the data.
+
+While `yearssmall` does not appear to have a significant impact on graduation rates, `yearsstar` has a significant positive effect, indicating that more years in the STAR project improve the likelihood of graduating.
+
+
+2. Linear Regression Model for High School GPA
+
+```{r}
+model_gpa <- lm(hsgpaoverall ~ yearssmall + yearsstar, data = data2)
+summary(model_gpa)
+```
+
+- **Intercept**: The baseline GPA when both `yearssmall` and `yearsstar` are 0 is 78.2475. This is highly statistically significant ($p < 2e-16$), indicating a robust baseline level.
+
+- **Yearssmall**: The coefficient for `yearssmall` is 0.1647, meaning that each additional year in small classes increases GPA by 0.1647 points on average. However, this effect is not statistically significant ($p = 0.27656$).
+
+- **Yearsstar**: The coefficient for `yearsstar` is 2.0204, meaning that each additional year in the STAR project significantly increases GPA by 2.0204 points on average ($p = 0.00219$).
+
+- **Residual Standard Error**: 7.163, indicating the average deviation of observed GPA from the predicted GPA.
+
+- **R-squared**: 0.01561, meaning that only 1.56% of the variation in GPA is explained by the predictors. The adjusted R-squared is slightly lower at 0.01313.
+
+- **F-statistic**: 6.302 ($p = 0.001926$), indicating that the overall model is statistically significant.
+
+Similar to the logistic regression results, `yearsstar` has a significant positive effect on GPA, while `yearssmall` does not show a statistically significant impact. However, the model explains only a small portion of the total variation in GPA, suggesting other factors may also play a role.
+
+**Diagnostic**
+
+1. Logistic Regression Diagnostics
+
+```{r}
+library(car)
+vif(model_graduation)
+
+# Hosmer-Lemeshow Test
+library(ResourceSelection)
+hoslem.test(data2$hsgrdcol, fitted(model_graduation))
+```
+
+- VIF values for `yearssmall` and `yearsstar` are both 1.067, which is well below the threshold of 5. This indicates that multicollinearity is not a concern in this model.
+
+The test result shows $\chi^2 = 0.29217$, $df = 1$, and $p = 0.5888$. A p-value greater than 0.05 indicates that the model fits the data well. There is no evidence to suggest a poor fit between the predicted probabilities and the observed outcomes.
+
+2. Linear Regression Diagnostics
+
+```{r}
+# Residual Normality
+qqnorm(residuals(model_gpa))
+qqline(residuals(model_gpa))
+
+# Heteroskedasticity Test
+library(lmtest)
+bptest(model_gpa)
+```
+
+- The Q-Q plot shows the residuals are reasonably normal, with slight deviations at the tails (both ends), suggesting potential minor departures from normality.
+
+- Test statistic: $ BP = 3.1408 $, degrees of freedom ($ df = 2 $), $ p\text{-value} = 0.208 $. A $ p\text{-value} > 0.05 $ indicates no significant evidence of heteroskedasticity. The variance of residuals appears to be constant, satisfying the homoscedasticity assumption.
+
+**Conclusion**
+
+1. High School Graduation Rates
+
+- STAR project participation significantly improves graduation rates: each additional year increases the log-odds of graduating by 0.73759 ($p = 0.035$).
+
+- Small class years show no significant effect on graduation rates ($p = 0.874$).
+
+2. High School GPA
+
+- STAR project participation significantly boosts GPA: each additional year increases GPA by 2.0204 points ($p = 0.00219$).
+
+- Small class years show no significant effect on GPA ($p = 0.27656$).
+
+3. Reliability
+
+- Both models meet diagnostic assumptions, ensuring reliable results.
+
+## Time series Analysis
+
+The student math scores (`g1tmathss` to `g8tmathss`) are time-series data. Growth curve models can capture the trajectory of student performance over time.
+
+**Model Formula**:
+
+$$
+\text{MathScore}_{it} = \beta_0 + \beta_1 \cdot \text{Time}_t + \beta_2 \cdot \text{YearsSmall}_i + \beta_3 \cdot \text{YearsStar}_i + \beta_4 \cdot (\text{Time}_t \times \text{YearsSmall}_i) + \beta_5 \cdot (\text{Time}_t \times \text{YearsStar}_i) + u_i + \epsilon_{it}
+$$
+
+**Parameters**:
+
+- $\text{MathScore}_{it}$: Math score of student $i$ at time $t$.
+
+- $\beta_0$: Intercept, representing the average initial math score.
+
+- $\beta_1$: Time effect, indicating the average rate of change in math scores over time.
+
+- $\beta_2$: Main effect of `YearsSmall`, representing the overall impact of years in small classes on math scores.
+
+- $\beta_3$: Main effect of `YearsStar`, representing the overall impact of years in the STAR project on math scores.
+
+- $\beta_4$: Interaction effect between `YearsSmall` and time, indicating how years in small classes influence the rate of change in math scores.
+
+- $\beta_5$: Interaction effect between `YearsStar` and time, indicating how years in the STAR project influence the rate of change in math scores.
+
+- $u_i$: Random effects for individual students, capturing unobserved heterogeneity.
+
+- $\epsilon_{it}$: Residual error term, representing unexplained variation at each time point.
+
+**Limitations**:
+
+There are too much missing values that there only 798 observations remain, so there may have great bias by using this method.
+
+# Conclusion and Discussion
+## Key Findings
+
+- Small or Special classes: Small class and/or special classes mess up 4.42 points (p = 0.00298) but not long-term high school graduation rates ($p=0.874$) or GPA ($p=0.27656$); On the other hand, however, STAR significantly increases the likelihood of graduation and GPA.
+
+- Class Type Equity: Class type imbalance is low, teacher/student characteristic or school conditions are not significantly biased (p > 0.05)
+
+
+## Policy Implications
+
+1. Optimizing Class Type:
+
+- Small-class policies may not be enough on their own to drive better outcomes — the emphasis should instead turn towards school location and student economics.
+
+- Instead of exclusively cutting classes size, improve teaching and curriculum in all class types.
+
+2. Equity of Resources:
+
+- Make class types more equitable when it comes to LOTS :- Do not over-focus on resources in small classes where we don't have clearbenefits
+
+3. Mulling Over Class Size Mandates Again:
+
+- The turn from blanket small classes to balanced strategies that combine modest class sizes with teacher preparation and targeted supports.
+
+# Acknowledgement
+
+This work was discussed and developed with the valuable input and guidance of Yuanyan.
+
+# Reference
+
+Tennessee State Department of Education. Tennessee's Student Teacher Achievement Ratio (STAR) Project. Harvard Dataverse, 2008. DOI: hdl:1902.1/10766
+
+STAR Technical Report Part I. Class Size Matters, 2016.
+
+
+# Session info {-}
+
+<span style='color:blue'>
+Report information of your `R` session for reproducibility. 
+</span> 
+
+
+```{r}
+sessionInfo()
+```
