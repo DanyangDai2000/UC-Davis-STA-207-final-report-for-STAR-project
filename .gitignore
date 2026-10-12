@@ -1,0 +1,10 @@
+# 数据与官方文档：不随仓库分发（见 data/README.md）
+data/*.sav
+data/reference/
+
+# 脚本运行产物（§4 诊断图）
+report/figures/diag_*.png
+
+# macOS / 系统
+.DS_Store
+._*

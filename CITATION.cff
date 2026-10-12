@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "若使用本仓库的代码或分析结果，请按下述信息引用本仓库；底层的 Project STAR 数据请另行引用（见 references）。"
+title: "小班教学对幼儿园学业成绩的因果效应：Project STAR 再分析"
+abstract: "基于 Project STAR 随机实验公开数据的回归分析：估计小班教学对幼儿园（K）学生阅读与数学成绩的因果效应，并检验该效应的稳健性、群体异质性与时间持续性。"
+type: software
+authors:
+  - family-names: Dai
+    given-names: Danyang
+version: 1.0.0
+date-released: "2026-10-12"
+license: MIT
+keywords:
+  - causal inference
+  - class size
+  - Project STAR
+  - education policy
+  - regression analysis
+repository-code: "https://github.com/DanyangDai2000/UC-Davis-STA-207-final-report-for-STAR-project"
+references:
+  - type: data
+    title: "Tennessee's Student Teacher Achievement Ratio (STAR) project"
+    authors:
+      - family-names: Achilles
+        given-names: C. M.
+      - family-names: Bain
+        given-names: Helen Pate
+      - family-names: Bellott
+        given-names: Fred
+      - family-names: Boyd-Zaharias
+        given-names: Jayne
+      - family-names: Finn
+        given-names: Jeremy
+      - family-names: Folger
+        given-names: John
+      - family-names: Johnston
+        given-names: John
+      - family-names: Word
+        given-names: Elizabeth
+    year: 2008
+    version: 1
+    publisher:
+      name: Harvard Dataverse
+    doi: 10.7910/DVN/SIWH9F
+    license: CC0-1.0
+    url: "https://doi.org/10.7910/DVN/SIWH9F"
